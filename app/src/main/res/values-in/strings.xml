@@ -24,4 +24,5 @@
     <string name="insert_image">Tolong masukan gambar</string>
     <string name="retry">Coba lagi</string>
     <string name="maps">Peta</string>
+    <string name="title_activity_story_with_maps">Cerita Dengan Peta</string>
 </resources>
