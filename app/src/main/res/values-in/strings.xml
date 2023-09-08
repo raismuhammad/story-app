@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Story App</string>
+    <string name="signup">Daftar</string>
+    <string name="login">Masuk</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="message_login_page">Masuk untuk melanjutkan</string>
+    <string name="title_login_page">Selamat datang kembali</string>
+    <string name="name">Nama</string>
+    <string name="logout">keluar</string>
+    <string name="text_register">Tidak mempunya akun?</string>
+    <string name="text_register_button">Membuat akun baru</string>
+    <string name="story">Cerita</string>
+    <string name="description">Deskripsi</string>
+    <string name="date">Tanggal</string>
+    <string name="add_story">Menambahkan cerita</string>
+    <string name="camera">Kamera</string>
+    <string name="gallery">Galeri</string>
+    <string name="settings">Pengaturan</string>
+    <string name="upload">Unggah</string>
+    <string name="title_signup_page">Mendaftarkan akun</string>
+    <string name="content_description">Tambahkan deskripsi kamu</string>
+    <string name="insert_image">Tolong masukan gambar</string>
+    <string name="retry">Coba lagi</string>
+    <string name="maps">Peta</string>
+</resources>

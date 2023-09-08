@@ -1,0 +1,27 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.StoryApp" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your dark theme here. -->
+        <item name="android:textColor">@color/white</item>
+
+        <item name="colorPrimary">@color/primaryColorDark</item>
+        <item name="colorPrimaryDark">@color/oxfordBlue</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorAccent">@color/primaryColorDark</item>
+    </style>
+
+    <style name="Theme.AppBar" parent="Widget.Material3.AppBarLayout">
+        <item name="colorPrimary">@color/primaryColorDark</item>
+        <item name="colorSurface">@color/colorSurfaceDark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:textColor">@color/white</item>
+
+        <item name="titleTextColor">@color/white</item>
+        <item name="windowActionBar">false</item>
+    </style>
+
+    <style name="EditText">
+        <item name="boxBackgroundColor">@color/grey</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+</resources>
