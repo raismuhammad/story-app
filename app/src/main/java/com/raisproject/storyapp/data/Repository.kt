@@ -74,7 +74,7 @@ class Repository private constructor(
         }
     }
 
-    fun uploadStory(file: MultipartBody.Part, description: RequestBody, lat: Double, lon: Double, token: String) : LiveData<Result<UploadResponse>> = liveData {
+    fun uploadStory(file: MultipartBody.Part, description: RequestBody, lat: Double?, lon: Double?, token: String) : LiveData<Result<UploadResponse>> = liveData {
         emit(Result.Loading)
         try {
             val response = apiService.uploadStory(file, description, lat, lon, token)

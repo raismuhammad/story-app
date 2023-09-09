@@ -24,4 +24,7 @@
     <string name="retry">Try again</string>
     <string name="maps">Maps</string>
     <string name="title_activity_story_with_maps">Story With Maps</string>
+    <string name="use_location">Use location</string>
+    <string name="not_have_permission">Not have permission</string>
+    <string name="location_not_found">Location is not found. Try Again</string>
 </resources>

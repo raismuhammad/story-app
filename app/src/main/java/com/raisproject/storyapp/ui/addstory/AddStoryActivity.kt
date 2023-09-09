@@ -33,6 +33,7 @@ import com.raisproject.storyapp.utils.uriToFile
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
@@ -43,9 +44,11 @@ class AddStoryActivity : AppCompatActivity() {
     private var getFile: File? = null
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var userPreferences: UserPreferences
-
     lateinit var factory: ViewModelFactory
     val viewModel: AddStoryViewModel by viewModels() { factory }
+    var useLocation = false
+    var lat: Double? = null
+    var lon: Double? = null
 
     companion object {
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
@@ -62,11 +65,12 @@ class AddStoryActivity : AppCompatActivity() {
             if (!allPermissionGranted()) {
                 Toast.makeText(
                     this,
-                    "Tidak mendapatkan permission",
+                    R.string.not_have_permission,
                     Toast.LENGTH_SHORT
                 ).show()
                 finish()
             }
+            lastLocation()
         }
     }
 
@@ -96,77 +100,124 @@ class AddStoryActivity : AppCompatActivity() {
                 REQUIRED_PERMISSIONS,
                 REQUEST_CODE_PERMISSIONS
             )
+            lastLocation()
         }
 
+        lastLocation()
         binding.btnCamera.setOnClickListener { startTakePhoto() }
         binding.btnGallery.setOnClickListener { startGallery() }
         binding.btnUpload.setOnClickListener {
             if (token != null) {
                 uploadImage(
                     binding.etDesc.text.toString(),
-                    token
+                    token,
+                    lat,
+                    lon
                 )
             }
         }
+
+
     }
 
+    private fun checkPermission(permission: String): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            permission
+        ) == PackageManager.PERMISSION_GRANTED
+    }
 
+    private fun lastLocation() {
+        val token = userPreferences.getUser().token
 
-    private fun uploadImage(desc: String, token: String) {
-        if (getFile != null) {
-            val lastLoc = fusedLocationProviderClient.lastLocation
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 101)
-            }
-
-            var lat: Double
-            var lon: Double
-
-            lastLoc.addOnSuccessListener { location: Location? ->
+        if (checkPermission(Manifest.permission.ACCESS_FINE_LOCATION) &&
+            checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+        ) {
+            fusedLocationProviderClient.lastLocation.addOnSuccessListener { location: Location? ->
                 if (location != null) {
-
-                    val auth = "bearer ${token}"
-                    val file = reduceFileImage(getFile as File)
-
                     lat = location.latitude
                     lon = location.longitude
-
-                    val description = desc.toRequestBody("text/plain".toMediaType())
-                    val requestImageFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-                    val imageMultiPart: MultipartBody.Part = MultipartBody.Part.createFormData(
-                        "photo",
-                        file.name,
-                        requestImageFile
-                    )
-                    viewModel.uploadStory(imageMultiPart, description, lat, lon, auth).observe(this) { result ->
-                        if (result != null) {
-                            when (result) {
-                                is Result.Success -> {
-                                    binding.progressBar.visibility = View.GONE
-                                    Toast.makeText(this, "Add Story ${result.data.message}", Toast.LENGTH_SHORT).show()
-                                    startActivity(Intent(this, UserStoryActivity::class.java))
-                                }
-                                is Result.Loading -> { binding.progressBar.visibility = View.VISIBLE }
-                                is Result.Error -> {
-                                    binding.progressBar.visibility = View.GONE
-                                    Log.d("TAG", "uploadImage: ${result.message}")
-                                    Toast.makeText(this, "Add Story ${result.message}" , Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
-
-                    }
                 } else {
-                    Toast.makeText(this@AddStoryActivity, R.string.insert_image, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@AddStoryActivity,
+                        R.string.location_not_found,
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
+        } else {
+            requestPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
+    // permission location
+    private val requestPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            when {
+                permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false -> {
+                    // Precise location access granted.
+                    lastLocation()
+                }
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false -> {
+                    // Only approximate location access granted.
+                    lastLocation()
+                }
+                else -> {
+                    // No location access granted.
+                    lat = null
+                    lon = null
+                }
+            }
+        }
+
+    private fun uploadImage(desc: String, token: String?, lat: Double?, lon: Double?) {
+        if (getFile != null) {
+
+            val auth = "Bearer ${token}"
+            val file = reduceFileImage(getFile as File)
+
+            val description = desc.toRequestBody("text/plain".toMediaType())
+            val requestImageFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+            val imageMultiPart: MultipartBody.Part = MultipartBody.Part.createFormData(
+                "photo",
+                file.name,
+                requestImageFile
+            )
+
+            if (useLocation) {
+                uploadStory(imageMultiPart, description, lat, lon, auth)
+            } else {
+                uploadStory(imageMultiPart, description, lat, lon, auth)
+            }
+        } else {
+            Toast.makeText(this@AddStoryActivity, R.string.insert_image, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun uploadStory(imageMultiPart: MultipartBody.Part, description: RequestBody, lat: Double?, lon: Double?, auth: String) {
+        viewModel.uploadStory(imageMultiPart, description, lat, lon, auth).observe(this) { result ->
+            if (result != null) {
+                when (result) {
+                    is Result.Success -> {
+                        binding.progressBar.visibility = View.GONE
+                        Toast.makeText(this, "Add Story ${result.data.message}", Toast.LENGTH_SHORT).show()
+                        startActivity(Intent(this, UserStoryActivity::class.java))
+                    }
+                    is Result.Loading -> { binding.progressBar.visibility = View.VISIBLE }
+                    is Result.Error -> {
+                        binding.progressBar.visibility = View.GONE
+                        Toast.makeText(this, "Add Story ${result.message}" , Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
         }
     }
 
